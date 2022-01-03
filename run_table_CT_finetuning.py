@@ -217,7 +217,7 @@ def train(args, config, train_dataset, model, eval_dataset = None):
 
             prediction_scores = outputs[1]
             ap = average_precision(prediction_scores.view(-1, config.class_num), labels.view((-1, config.class_num)))
-            map = (ap*labels_mask.view(-1)).sum()/labels_mask.sum() ### map --> mean average precision 
+            map = (ap*labels_mask.view(-1)).sum()/labels_mask.sum() ### map --> mean average precision
 
             if args.n_gpu > 1:
                 loss = loss.mean()  # mean() to average on multi-gpu parallel training

@@ -1,0 +1,5 @@
+name: myenv
+channels:
+  - defaults
+  - conda-forge
+prefix: C:\Users\Kim\Anaconda3\envs\myenv

@@ -154,8 +154,11 @@ class WikiCTDataset(Dataset): ### using to define datasets
                 os.mkdir(os.path.join(data_dir, "procressed_WikiCT"))
             except FileExistsError:
                 pass
-            with open(os.path.join(data_dir, "{}.table_col_type.json".format(self.src)), "r") as f: ### change name here when loading file!?
-                cols = json.load(f)
+            ### open train representation
+            with open(os.path.join(data_dir, "{}_representation.txt".format(self.src)), 'rb') as fp:  # Unpickling
+                cols = pickle.load(fp)
+            #with open(os.path.join(data_dir, "{}.table_col_type.json".format(self.src)), "r") as f: ### change name here when loading file!?
+             #   cols = json.load(f)
 
         print('{} {} tables'.format(len(cols),self.src))
         pool = Pool(processes=4)
