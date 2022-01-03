@@ -106,7 +106,7 @@ def whitespace_tokenize(text):
     return tokens
 
 
-class BertTokenizer(PreTrainedTokenizer):
+class BertTokenizer(PreTrainedTokenizer): ### using
     r"""
     Constructs a BertTokenizer.
     :class:`~transformers.BertTokenizer` runs end-to-end tokenization: punctuation splitting + wordpiece

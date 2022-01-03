@@ -93,6 +93,7 @@ def process_single_table(input_table, config):
     cell_mask = np.concatenate(cell_mask, axis=0)
     input_mask = np.concatenate([meta_mask,header_mask,cell_mask],axis=0)
     return [input_tok,input_type,input_mask]
+
 class WikiTableDataset(Dataset):
     def _preprocess(self, data_dir):
         preprocessed_filename = os.path.join(

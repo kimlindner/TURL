@@ -24,7 +24,7 @@ import pdb
 from model.transformers import BertTokenizer
 
 
-def process_single_CT(input_data, config):
+def process_single_CT(input_data, config): ### using
     table_id, pgTitle, pgEnt, secTitle, caption, headers, entities, type_annotations = input_data
     entities = [z for column in entities for z in column[:config.max_column]]
     pgEnt = config.entity_wikid2id.get(pgEnt, -1)
@@ -59,27 +59,27 @@ def process_single_CT(input_data, config):
         input_ent.append(entity)
         input_ent_text.append(tokenized_ent_text)
         input_ent_type.append(4)
-        if index[1] not in column_en_map:
+        if index[1] not in column_en_map: ###
             column_en_map[index[1]] = [e_i]
         else:
             column_en_map[index[1]].append(e_i)
-        if index[0] not in row_en_map:
+        if index[0] not in row_en_map: ###
             row_en_map[index[0]] = [e_i]
         else:
             row_en_map[index[0]].append(e_i)
     input_ent_length = len(input_ent)
     # create column entity mask
-    column_entity_mask = np.zeros([len(type_annotations), len(input_ent)], dtype=int)
+    column_entity_mask = np.zeros([len(type_annotations), len(input_ent)], dtype=int) ###
     for j in range(len(type_annotations)):
         for e_i_1 in column_en_map[j]:
-            column_entity_mask[j, e_i_1] = 1
+            column_entity_mask[j, e_i_1] = 1 ### visibility matrix?
     # create column header mask
     start_i = 0
     header_span = {}
-    column_header_mask = np.zeros([len(type_annotations), len(input_tok)], dtype=int)
+    column_header_mask = np.zeros([len(type_annotations), len(input_tok)], dtype=int) ###
     for j in range(len(type_annotations)):
         header_span[j] = (start_i, start_i+tokenized_headers_length[j])
-        column_header_mask[j, tokenized_meta_length+header_span[j][0]:tokenized_meta_length+header_span[j][1]] = 1
+        column_header_mask[j, tokenized_meta_length+header_span[j][0]:tokenized_meta_length+header_span[j][1]] = 1 ###
         start_i += tokenized_headers_length[j]
     #create input mask
     tok_tok_mask = np.ones([len(input_tok), len(input_tok)], dtype=int)
@@ -118,7 +118,7 @@ def process_single_CT(input_data, config):
     if pgEnt==-1:
         new_input_ent_mask[1][:, 0] = 0
         new_input_ent_mask[1][0, :] = 0
-    column_entity_mask = np.concatenate([np.zeros([len(type_annotations), 1], dtype=int),column_entity_mask],axis=1)
+    column_entity_mask = np.concatenate([np.zeros([len(type_annotations), 1], dtype=int),column_entity_mask],axis=1) ###
 
     input_ent_mask = new_input_ent_mask
     labels = np.zeros([len(type_annotations), config.type_num], dtype=int)
@@ -135,8 +135,10 @@ def process_single_CT(input_data, config):
                 np.array(input_ent),input_ent_text_padded,input_ent_cell_length,np.array(input_ent_type),(np.array(input_ent_mask[0]),np.array(input_ent_mask[1])),len(input_ent), \
                 column_header_mask,column_entity_mask,labels,len(labels)]
 
-class WikiCTDataset(Dataset):
-
+class WikiCTDataset(Dataset): ### using to define datasets
+    '''
+    used for defining the datasets when running
+    '''
     def _preprocess(self, data_dir):
         preprocessed_filename = os.path.join(
             data_dir, "procressed_WikiCT", self.src
@@ -152,12 +154,12 @@ class WikiCTDataset(Dataset):
                 os.mkdir(os.path.join(data_dir, "procressed_WikiCT"))
             except FileExistsError:
                 pass
-            with open(os.path.join(data_dir, "{}.table_col_type.json".format(self.src)), "r") as f:
+            with open(os.path.join(data_dir, "{}.table_col_type.json".format(self.src)), "r") as f: ### change name here when loading file!?
                 cols = json.load(f)
 
         print('{} {} tables'.format(len(cols),self.src))
         pool = Pool(processes=4)
-        processed_cols = list(tqdm(pool.imap(partial(process_single_CT,config=self), cols, chunksize=1000),total=len(cols)))
+        processed_cols = list(tqdm(pool.imap(partial(process_single_CT,config=self), cols, chunksize=1000),total=len(cols))) ### process_single_CT function to process the columns
         pool.close()
         # pdb.set_trace()
 
@@ -264,7 +266,7 @@ class finetune_collate_fn_CT:
                 batch_input_ent_text_padded, batch_input_ent_text_length, batch_input_ent_padded, batch_input_ent_type_padded, batch_input_ent_mask_padded, \
                 batch_column_entity_mask_padded, batch_column_header_mask_padded, batch_labels_mask, batch_labels_padded
 
-class CTLoader(DataLoader):
+class CTLoader(DataLoader): ### using
     """
     Base class for all data loaders
     """

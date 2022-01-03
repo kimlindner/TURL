@@ -100,11 +100,13 @@ def train(args, config, train_dataset, model, eval_dataset = None):
 
     args.train_batch_size = args.per_gpu_train_batch_size * max(1, args.n_gpu)
     train_sampler = RandomSampler(train_dataset) if args.local_rank == -1 else DistributedSampler(train_dataset)
+    ### loading the dataset with CTLoader --> CTLoader defined in CT_Wiki_data_loaders.py
     train_dataloader = CTLoader(train_dataset, sampler=train_sampler, batch_size=args.train_batch_size, is_train=True)
 
     if args.max_steps > 0:
         t_total = args.max_steps
-        args.num_train_epochs = args.max_steps // (len(train_dataloader) // args.gradient_accumulation_steps) + 1
+        ### calculate how many epochs to train (?)
+        args.num_train_epochs = args.max_steps // (len(train_dataloader) // args.gradient_accumulation_steps) + 1 ### '//' means integer division (only keep whole integer)
     else:
         t_total = len(train_dataloader) // args.gradient_accumulation_steps * args.num_train_epochs
 
@@ -118,7 +120,7 @@ def train(args, config, train_dataset, model, eval_dataset = None):
         {'params': [p for n, p in model.cls.named_parameters() if not any(nd in n for nd in no_decay)], 'weight_decay': args.weight_decay, 'lr': args.learning_rate*10 if args.cls_learning_rate==0 else args.cls_learning_rate},
         {'params': [p for n, p in model.cls.named_parameters() if any(nd in n for nd in no_decay)], 'weight_decay': 0.0, 'lr': args.learning_rate*10 if args.cls_learning_rate==0 else args.cls_learning_rate}
         ]
-    optimizer = AdamW(optimizer_grouped_parameters, eps=args.adam_epsilon)
+    optimizer = AdamW(optimizer_grouped_parameters, eps=args.adam_epsilon) ### using Adam for backpropagation --> optimizer
     scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=args.warmup_steps, num_training_steps=t_total)
     if args.fp16:
         try:
@@ -133,7 +135,7 @@ def train(args, config, train_dataset, model, eval_dataset = None):
 
     # Distributed training (should be after apex fp16 initialization)
     if args.local_rank != -1:
-        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.local_rank],
+        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.local_rank], ### torch model (?)
                                                           output_device=args.local_rank,
                                                           find_unused_parameters=True)
 
@@ -154,8 +156,9 @@ def train(args, config, train_dataset, model, eval_dataset = None):
     train_iterator = trange(int(args.num_train_epochs), desc="Epoch", disable=args.local_rank not in [-1, 0])
     set_seed(args)  # Added here for reproducibility (even between python 2 and 3)
     for _ in train_iterator:
-        epoch_iterator = tqdm(train_dataloader, desc="Iteration", disable=args.local_rank not in [-1, 0])
+        epoch_iterator = tqdm(train_dataloader, desc="Iteration", disable=args.local_rank not in [-1, 0]) ### tqdm --> for showing progress when running
         for step, batch in enumerate(epoch_iterator):
+            ### define the batch
             table_id, input_tok, input_tok_type, input_tok_pos, input_tok_mask, \
                 input_ent_text, input_ent_text_length, input_ent, input_ent_type, input_ent_mask, \
                 column_entity_mask, column_header_mask, labels_mask, labels = batch
@@ -172,7 +175,9 @@ def train(args, config, train_dataset, model, eval_dataset = None):
             column_header_mask = column_header_mask.to(args.device)
             labels_mask = labels_mask.to(args.device)
             labels = labels.to(args.device)
-            model.train()
+            model.train() ### train the model
+
+            ### deciding what will get masked (?)
             if args.mode == 1:
                 input_ent_mask = input_ent_mask[:,:,input_tok_mask.shape[1]:]
                 input_tok = None
@@ -203,6 +208,8 @@ def train(args, config, train_dataset, model, eval_dataset = None):
                 input_tok_mask = None
                 input_ent_text = None
                 input_ent_text_length = None
+
+            ### define the output
             outputs = model(input_tok, input_tok_type, input_tok_pos, input_tok_mask,\
                 input_ent_text, input_ent_text_length, input_ent, input_ent_type, input_ent_mask, column_entity_mask, column_header_mask, labels_mask, labels)
             # model outputs are always tuple in transformers (see doc)
@@ -210,7 +217,7 @@ def train(args, config, train_dataset, model, eval_dataset = None):
 
             prediction_scores = outputs[1]
             ap = average_precision(prediction_scores.view(-1, config.class_num), labels.view((-1, config.class_num)))
-            map = (ap*labels_mask.view(-1)).sum()/labels_mask.sum()
+            map = (ap*labels_mask.view(-1)).sum()/labels_mask.sum() ### map --> mean average precision 
 
             if args.n_gpu > 1:
                 loss = loss.mean()  # mean() to average on multi-gpu parallel training
@@ -241,7 +248,7 @@ def train(args, config, train_dataset, model, eval_dataset = None):
                         logger.info("***** Train results *****")
                         logger.info("  loss = %s", str((tr_loss - logging_loss)/args.logging_steps))
                         logger.info("  map = %s", str((tr_map - logging_map)/(args.gradient_accumulation_steps*args.logging_steps)))
-                        results = evaluate(args, config, eval_dataset, model)
+                        results = evaluate(args, config, eval_dataset, model) ### evaluation
                         for key, value in results.items():
                             tb_writer.add_scalar('eval_{}'.format(key), value, global_step)
                     tb_writer.add_scalar('lr', scheduler.get_lr()[0], global_step)
@@ -387,14 +394,14 @@ def main():
     parser.add_argument("--model_name_or_path", default="bert-base-cased", type=str,
                         help="The model checkpoint for weights initialization.")
     parser.add_argument("--mode", default=0, type=int,
-                        help="0: use both;1: use table;2: use entity")
+                        help="0: use both;1: use table;2: use entity") ### for use!?
 
     parser.add_argument("--config_name", default="", type=str,
                         help="Optional pretrained config name or path if not the same as model_name_or_path")
     parser.add_argument("--tokenizer_name", default="", type=str,
                         help="Optional pretrained tokenizer name or path if not the same as model_name_or_path")
     parser.add_argument("--cache_dir", default="", type=str,
-                        help="Optional directory to store the pre-trained models downloaded from s3 (instread of the default one)")
+                        help="Optional directory to store the pre-trained models downloaded from s3 (instead of the default one)")
     parser.add_argument("--block_size", default=-1, type=int,
                         help="Optional input sequence length after tokenization."
                              "The training dataset will be truncated in block of this size for training."
@@ -406,7 +413,7 @@ def main():
     parser.add_argument("--evaluate_during_training", action='store_true',
                         help="Run evaluation during training at each logging step.")
     parser.add_argument("--do_lower_case", action='store_true',
-                        help="Set this flag if you are using an uncased model.")
+                        help="Set this flag if you are using an uncased model.") ###
 
     parser.add_argument("--per_gpu_train_batch_size", default=4, type=int,
                         help="Batch size per GPU/CPU for training.")
@@ -415,7 +422,7 @@ def main():
     parser.add_argument('--gradient_accumulation_steps', type=int, default=1,
                         help="Number of updates steps to accumulate before performing a backward/update pass.")
     parser.add_argument("--learning_rate", default=5e-5, type=float,
-                        help="The initial learning rate for Adam.")
+                        help="The initial learning rate for Adam.") ###
     parser.add_argument("--cls_learning_rate", default=0, type=float,
                         help="The initial learning rate for cls layer.")
     parser.add_argument("--weight_decay", default=0.0, type=float,
@@ -425,7 +432,7 @@ def main():
     parser.add_argument("--max_grad_norm", default=1.0, type=float,
                         help="Max gradient norm.")
     parser.add_argument("--num_train_epochs", default=1.0, type=float,
-                        help="Total number of training epochs to perform.")
+                        help="Total number of training epochs to perform.") ### does this needs to be changed? Default is 1.
     parser.add_argument("--max_steps", default=-1, type=int,
                         help="If > 0: set total number of training steps to perform. Override num_train_epochs.")
     parser.add_argument("--warmup_steps", default=0, type=int,
@@ -520,8 +527,9 @@ def main():
     if args.do_train:
         if args.local_rank not in [-1, 0]:
             torch.distributed.barrier()  # Barrier to make sure only the first process in distributed training process the dataset, and the others will use the cache
-        entity_vocab = load_entity_vocab(args.data_dir, ignore_bad_title=True, min_ent_count=2)
-        train_dataset = WikiCTDataset(args.data_dir, entity_vocab, type_vocab, max_input_tok=500, src="wiki_train10mix", max_length = [50, 10, 10], force_new=False, tokenizer = None)
+        ### loading and defining the datasets !!!
+        entity_vocab = load_entity_vocab(args.data_dir, ignore_bad_title=True, min_ent_count=2) ### what does ignore bad title mean? ### load_entity_vocab comes from util.py
+        train_dataset = WikiCTDataset(args.data_dir, entity_vocab, type_vocab, max_input_tok=500, src="wiki_train10mix", max_length = [50, 10, 10], force_new=False, tokenizer = None) ### do we also need a type_vocab as a ground truth?
         eval_dataset = WikiCTDataset(args.data_dir, entity_vocab, type_vocab, max_input_tok=500, src="wiki_test90", max_length = [50, 10, 10], force_new=False, tokenizer = None)
         assert config.vocab_size == len(train_dataset.tokenizer), \
             "vocab size mismatch, vocab_size=%d"%(len(train_dataset.tokenizer))

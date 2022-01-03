@@ -27,7 +27,7 @@ from model.transformers.configuration_utils import PretrainedConfig
 logger = logging.getLogger(__name__)
 
 
-class TableConfig(PretrainedConfig):
+class TableConfig(PretrainedConfig): ### using
     r"""
         Arguments:
             vocab_size_or_config_json_file: Vocabulary size of `inputs_ids` in `BertModel`.

@@ -72,11 +72,11 @@ RESERVED_ENT_VOCAB = {0:{'wiki_id':'[PAD]', 'wiki_title':'[PAD]', 'count': -1, '
                         }
 RESERVED_ENT_VOCAB_NUM = len(RESERVED_ENT_VOCAB)
 
-def load_entity_vocab(data_dir, ignore_bad_title=True, min_ent_count=1):
+def load_entity_vocab(data_dir, ignore_bad_title=True, min_ent_count=1): ### using
     entity_vocab = copy.deepcopy(RESERVED_ENT_VOCAB)
     bad_title = 0
     few_entity = 0
-    with open(os.path.join(data_dir, 'entity_vocab.txt'), 'r', encoding="utf-8") as f:
+    with open(os.path.join(data_dir, 'entity_vocab.txt'), 'r', encoding="utf-8") as f: ### need a file 'entity_vocab.txt'! --> contains all the entities we used in all experiments (these are the entities shown in pretraining)
         for line in f:
             _, entity_id, entity_title, entity_mid, count = line.strip().split('\t')
             if ignore_bad_title and entity_title == '':

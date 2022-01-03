@@ -1083,7 +1083,7 @@ class BertTR(BertPreTrainedModel):
         # pdb.set_trace()
         return tok_outputs  # (masked_lm_loss), (ltr_lm_loss), prediction_scores, (hidden_states), (attentions)
 
-class HybridTableCT(BertPreTrainedModel):
+class HybridTableCT(BertPreTrainedModel): ### using
     def __init__(self, config, is_simple=False):
         super(HybridTableCT, self).__init__(config)
 
@@ -1116,7 +1116,7 @@ class HybridTableCT(BertPreTrainedModel):
         if input_ent_tok is not None or input_ent is not None:
             ent_sequence_output = self.dropout(ent_outputs[0])
             ent_col_output = torch.matmul(column_entity_mask, ent_sequence_output)
-            ent_col_output /= column_entity_mask.sum(dim=-1,keepdim=True).clamp(1.0,9999.0)
+            ent_col_output /= column_entity_mask.sum(dim=-1,keepdim=True).clamp(1.0,9999.0) ###
         if input_tok is not None:
             if input_ent_tok is not None:
                 logits = self.cls(torch.cat([tok_col_output, ent_col_output], dim=-1))
