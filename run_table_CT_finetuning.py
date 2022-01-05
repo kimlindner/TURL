@@ -464,7 +464,15 @@ def main():
                         help="For distributed training: local_rank")
     parser.add_argument('--server_ip', type=str, default='', help="For distant debugging.")
     parser.add_argument('--server_port', type=str, default='', help="For distant debugging.")
-    args = parser.parse_args()
+
+    args = parser.parse_args(['--output_dir', 'src/data/product/TURL/output',
+                              '--model_name_or_path', 'src/data/product/TURL/input',
+                              '--model_type', 'CT',
+                              '--do_train',
+                              '--data_dir', 'src/data/product/TURL/input',
+                              '--config_name', 'configs/table-base-config_v2.json'
+                              ])
+    ###args = parser.parse_args() ### change back when running remote
 
 
     if os.path.exists(args.output_dir) and os.listdir(args.output_dir) and args.do_train and not args.overwrite_output_dir:
@@ -514,7 +522,8 @@ def main():
         # lm_checkpoints = list(os.path.dirname(c) for c in sorted(glob.glob(args.model_name_or_path + '/**/' + WEIGHTS_NAME, recursive=True)))
         # logger.info("load pre-trained model from %s", lm_checkpoints[-1])
         # lm_checkpoint = torch.load(os.path.join(lm_checkpoints[-1],"pytorch_model.bin"))
-        lm_checkpoint = torch.load(os.path.join(args.model_name_or_path,"pytorch_model.bin"))
+        ###lm_checkpoint = torch.load(os.path.join(args.model_name_or_path,"pytorch_model.bin")) ### change back when running with gpu
+        lm_checkpoint = torch.load(os.path.join(args.model_name_or_path,"pytorch_model.bin"), map_location=torch.device('cpu'))
         model.load_pretrained(lm_checkpoint)
         model.to(args.device)
 
@@ -528,9 +537,13 @@ def main():
         if args.local_rank not in [-1, 0]:
             torch.distributed.barrier()  # Barrier to make sure only the first process in distributed training process the dataset, and the others will use the cache
         ### loading and defining the datasets !!!
-        entity_vocab = load_entity_vocab(args.data_dir, ignore_bad_title=True, min_ent_count=2) ### what does ignore bad title mean? ### load_entity_vocab comes from util.py
-        train_dataset = WikiCTDataset(args.data_dir, entity_vocab, type_vocab, max_input_tok=500, src="wiki_train10mix", max_length = [50, 10, 10], force_new=False, tokenizer = None) ### do we also need a type_vocab as a ground truth?
-        eval_dataset = WikiCTDataset(args.data_dir, entity_vocab, type_vocab, max_input_tok=500, src="wiki_test90", max_length = [50, 10, 10], force_new=False, tokenizer = None)
+        entity_vocab = load_entity_vocab(args.data_dir, ignore_bad_title=True, min_ent_count=2) ### load_entity_vocab comes from util.py
+        ###train_dataset = WikiCTDataset(args.data_dir, entity_vocab, type_vocab, max_input_tok=500, src="wiki_train10mix", max_length = [50, 10, 10], force_new=False, tokenizer = None) ### do we also need a type_vocab as a ground truth?
+        ###eval_dataset = WikiCTDataset(args.data_dir, entity_vocab, type_vocab, max_input_tok=500, src="wiki_test90", max_length = [50, 10, 10], force_new=False, tokenizer = None)
+        train_dataset = WikiCTDataset(args.data_dir, entity_vocab, type_vocab, max_input_tok=500, max_length=[50, 10, 10], force_new=False, tokenizer=None)
+        eval_dataset = WikiCTDataset(args.data_dir, entity_vocab, type_vocab, max_input_tok=500, src="val",
+                                     max_length=[50, 10, 10], force_new=False, tokenizer=None)
+
         assert config.vocab_size == len(train_dataset.tokenizer), \
             "vocab size mismatch, vocab_size=%d"%(len(train_dataset.tokenizer))
 
@@ -563,6 +576,9 @@ def main():
 
     # Evaluation
     results = {}
+    ### load test dataset for evaluation
+    test_dataset = WikiCTDataset(args.data_dir, entity_vocab, type_vocab, max_input_tok=500, src="test",
+                                 max_length=[50, 10, 10], force_new=False, tokenizer=None)
     if args.do_eval and args.local_rank in [-1, 0]:
         checkpoints = [args.output_dir]
         if args.eval_all_checkpoints:
@@ -575,7 +591,7 @@ def main():
             
             model = model_class.from_pretrained(checkpoint)
             model.to(args.device)
-            result = evaluate(args, config, eval_dataset, model, prefix=prefix)
+            result = evaluate(args, config, test_dataset, model, prefix=prefix) ### changed eval_dataset to test_dataset
             result = dict((k + '_{}'.format(global_step), v) for k, v in result.items())
             results.update(result)
 
@@ -585,3 +601,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    #data_dir = os.path.join(str(Path(__file__).parents[0]), 'src/data/product/TURL/input')

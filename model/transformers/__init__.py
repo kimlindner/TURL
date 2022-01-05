@@ -22,13 +22,13 @@ from .file_utils import (TRANSFORMERS_CACHE, PYTORCH_TRANSFORMERS_CACHE, PYTORCH
                          WEIGHTS_NAME, TF2_WEIGHTS_NAME, TF_WEIGHTS_NAME, CONFIG_NAME,
                          is_tf_available, is_torch_available)
 
-from .data import (is_sklearn_available,
-                   InputExample, InputFeatures, DataProcessor,
-                   glue_output_modes, glue_convert_examples_to_features,
-                   glue_processors, glue_tasks_num_labels)
+#from .data import (is_sklearn_available,
+ #                  InputExample, InputFeatures, DataProcessor,
+  #                 glue_output_modes, glue_convert_examples_to_features,
+   #                glue_processors, glue_tasks_num_labels)
 
-if is_sklearn_available():
-    from .data import glue_compute_metrics
+#if is_sklearn_available():
+ #   from .data import glue_compute_metrics
 
 # Tokenizers
 from .tokenization_utils import (PreTrainedTokenizer)

@@ -160,6 +160,7 @@ class WikiCTDataset(Dataset): ### using to define datasets
             #with open(os.path.join(data_dir, "{}.table_col_type.json".format(self.src)), "r") as f: ### change name here when loading file!?
              #   cols = json.load(f)
 
+
         print('{} {} tables'.format(len(cols),self.src))
         pool = Pool(processes=4)
         processed_cols = list(tqdm(pool.imap(partial(process_single_CT,config=self), cols, chunksize=1000),total=len(cols))) ### process_single_CT function to process the columns
@@ -176,7 +177,8 @@ class WikiCTDataset(Dataset): ### using to define datasets
         if tokenizer is not None:
             self.tokenizer = tokenizer
         else:
-            self.tokenizer = BertTokenizer.from_pretrained('data/pre-trained_models/bert-base-uncased')
+            ###self.tokenizer = BertTokenizer.from_pretrained('data/pre-trained_models/bert-base-uncased')
+            self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
         self.src = src
         self.force_new = force_new
         self.max_input_tok = max_input_tok
