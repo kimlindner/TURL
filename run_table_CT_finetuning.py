@@ -465,6 +465,7 @@ def main():
     parser.add_argument('--server_ip', type=str, default='', help="For distant debugging.")
     parser.add_argument('--server_port', type=str, default='', help="For distant debugging.")
 
+    '''
     args = parser.parse_args(['--output_dir', 'src/data/product/TURL/output',
                               '--model_name_or_path', 'src/data/product/TURL/input',
                               '--model_type', 'CT',
@@ -472,7 +473,8 @@ def main():
                               '--data_dir', 'src/data/product/TURL/input',
                               '--config_name', 'configs/table-base-config_v2.json'
                               ])
-    ###args = parser.parse_args() ### change back when running remote
+    '''
+    args = parser.parse_args() ### change back when running remote
 
 
     if os.path.exists(args.output_dir) and os.listdir(args.output_dir) and args.do_train and not args.overwrite_output_dir:
@@ -514,7 +516,7 @@ def main():
     config_class, model_class, _ = MODEL_CLASSES[args.model_type]
     config = config_class.from_pretrained(args.config_name if args.config_name else args.model_name_or_path,
                                           cache_dir=args.cache_dir if args.cache_dir else None)
-    type_vocab = load_type_vocab(args.data_dir)
+    type_vocab = load_type_vocab(args.data_dir) ### load_type_vocab comes from util.py
     config.class_num = len(type_vocab)
     config.mode = args.mode
     model = model_class(config, is_simple=True)
@@ -522,8 +524,8 @@ def main():
         # lm_checkpoints = list(os.path.dirname(c) for c in sorted(glob.glob(args.model_name_or_path + '/**/' + WEIGHTS_NAME, recursive=True)))
         # logger.info("load pre-trained model from %s", lm_checkpoints[-1])
         # lm_checkpoint = torch.load(os.path.join(lm_checkpoints[-1],"pytorch_model.bin"))
-        ###lm_checkpoint = torch.load(os.path.join(args.model_name_or_path,"pytorch_model.bin")) ### change back when running with gpu
-        lm_checkpoint = torch.load(os.path.join(args.model_name_or_path,"pytorch_model.bin"), map_location=torch.device('cpu'))
+        lm_checkpoint = torch.load(os.path.join(args.model_name_or_path,"pytorch_model.bin")) ### change back when running with gpu
+        ###lm_checkpoint = torch.load(os.path.join(args.model_name_or_path,"pytorch_model.bin"), map_location=torch.device('cpu')) ### when running without gpu
         model.load_pretrained(lm_checkpoint)
         model.to(args.device)
 
@@ -601,4 +603,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    #data_dir = os.path.join(str(Path(__file__).parents[0]), 'src/data/product/TURL/input')

@@ -104,9 +104,10 @@ def generate_vocab_distribution(entity_vocab):
     distribution /= np.sum(distribution)
     return distribution
 
-def load_type_vocab(data_dir):
+def load_type_vocab(data_dir): ### using
     type_vocab = {}
-    with open(os.path.join(data_dir, "type_vocab.txt"), "r") as f:
+    ###with open(os.path.join(data_dir, "type_vocab.txt"), "r") as f:
+    with open(os.path.join(data_dir, "type_vocab_clusters.txt"), "r") as f: ### changed type_vocab file to our target_labels
         for line in f:
             index, t = line.strip().split('\t')
             type_vocab[t] = int(index)
