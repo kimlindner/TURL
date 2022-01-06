@@ -1,6 +1,11 @@
-OUTPUT_DIR=model_v1_table_0.2_0.6_0.7_10000_1e-4_candnew_0_adam
-MODE=5
-CUDA_VISIBLE_DEVICES="1" python run_table_CT_finetuning.py \
+#!/bin/bash
+#SBATCH --partition=gpu_8
+#SBATCH --gres=gpu:8
+#SBATCH --nodes=1
+#SBATCH --time=48:00:00
+#SBATCH --export=NONE
+MODE=0
+python run_table_CT_finetuning.py \
     --output_dir=src/data/product/output \
     --model_name_or_path=src/data/product/input \
     --model_type=CT \
