@@ -1,11 +1,11 @@
 OUTPUT_DIR=model_v1_table_0.2_0.6_0.7_10000_1e-4_candnew_0_adam
 MODE=5
 CUDA_VISIBLE_DEVICES="1" python run_table_CT_finetuning.py \
-    --output_dir=src/data/product/TURL/output \
-    --model_name_or_path=src/data/product/TURL/input \
+    --output_dir=src/data/product/output \
+    --model_name_or_path=src/data/product/input \
     --model_type=CT \
     --do_train \
-    --data_dir=src/data/product/TURL/input \
+    --data_dir=src/data/product/input \
     --evaluate_during_training \
     --per_gpu_train_batch_size=20 \
     --per_gpu_eval_batch_size=20 \

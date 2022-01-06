@@ -466,11 +466,11 @@ def main():
     parser.add_argument('--server_port', type=str, default='', help="For distant debugging.")
 
     '''
-    args = parser.parse_args(['--output_dir', 'src/data/product/TURL/output',
-                              '--model_name_or_path', 'src/data/product/TURL/input',
+    args = parser.parse_args(['--output_dir', 'src/data/product/output',
+                              '--model_name_or_path', 'src/data/product/input',
                               '--model_type', 'CT',
                               '--do_train',
-                              '--data_dir', 'src/data/product/TURL/input',
+                              '--data_dir', 'src/data/product/input',
                               '--config_name', 'configs/table-base-config_v2.json'
                               ])
     '''
